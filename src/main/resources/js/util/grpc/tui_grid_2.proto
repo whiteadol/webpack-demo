@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.tui_grid.proto";
+option java_outer_classname = "tuiGridProto";
+
+message Params {
+  int32 page = 1;
+  int32 perPage = 2;
+}
+
+message Contents{
+  string cnt = 1;
+  string uId = 2;
+  string uName = 3;
+  string wlBrName = 4;
+  string wlType = 5;
+  string wlIp = 6;
+  string wlChangePoint = 7;
+  string wlDt = 8;
+}
+
+message Pagination {
+  int32 page = 1;
+  int32 totalCount = 2;
+}
+
+message Data{
+  repeated Contents contents = 1;
+  Pagination pagination = 2;
+}
+
+message TuiGridForm {
+  bool result = 1;
+  Data data = 2;
+}
+
+service TuiGridServerSideService {
+  rpc SendTuiGridForm (Params) returns (TuiGridForm) {}
+}

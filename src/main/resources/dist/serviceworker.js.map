@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../js/business/serviceworker.js"],
+  "sourcesContent": ["self.addEventListener('push', event => {\r\n\tlet { title, body, icon, tag } = JSON.parse(event.data && event.data.text());\r\n\r\n\tevent.waitUntil(self.registration.showNotification(title || '', { body, tag, icon }));\r\n});\r\n\r\nself.addEventListener('notificationclick', function (event) {\r\n\tevent.notification.close();\r\n\r\n\tconst urlToOpen = 'http://localhost:1234';\r\n\r\n\tevent.waitUntil(\r\n\t\tself.clients\r\n\t\t\t.matchAll({\r\n\t\t\t\ttype: 'window',\r\n\t\t\t\tincludeUncontrolled: true,\r\n\t\t\t})\r\n\t\t\t.then(function (clientList) {\r\n\t\t\t\tif (clientList.length > 0) {\r\n\t\t\t\t\t// \uC774\uBBF8 \uC5F4\uB824\uC788\uB294 \uD0ED\uC774 \uC788\uB294 \uACBD\uC6B0\r\n\t\t\t\t\treturn clientList[0].focus().then(client => client.navigate(urlToOpen));\r\n\t\t\t\t}\r\n\t\t\t\treturn self.clients.openWindow(urlToOpen);\r\n\t\t\t}),\r\n\t);\r\n});\r\n"],
+  "mappings": ";;AAAA,OAAK,iBAAiB,QAAQ,WAAS;AACtC,QAAI,EAAE,OAAO,MAAM,MAAM,IAAI,IAAI,KAAK,MAAM,MAAM,QAAQ,MAAM,KAAK,KAAK,CAAC;AAE3E,UAAM,UAAU,KAAK,aAAa,iBAAiB,SAAS,IAAI,EAAE,MAAM,KAAK,KAAK,CAAC,CAAC;AAAA,EACrF,CAAC;AAED,OAAK,iBAAiB,qBAAqB,SAAU,OAAO;AAC3D,UAAM,aAAa,MAAM;AAEzB,UAAM,YAAY;AAElB,UAAM;AAAA,MACL,KAAK,QACH,SAAS;AAAA,QACT,MAAM;AAAA,QACN,qBAAqB;AAAA,MACtB,CAAC,EACA,KAAK,SAAU,YAAY;AAC3B,YAAI,WAAW,SAAS,GAAG;AAE1B,iBAAO,WAAW,CAAC,EAAE,MAAM,EAAE,KAAK,YAAU,OAAO,SAAS,SAAS,CAAC;AAAA,QACvE;AACA,eAAO,KAAK,QAAQ,WAAW,SAAS;AAAA,MACzC,CAAC;AAAA,IACH;AAAA,EACD,CAAC;",
+  "names": []
+}

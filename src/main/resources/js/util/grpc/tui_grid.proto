@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+message Params {
+    int32 page = 0;
+    int32 perPage = 1;
+}
+
+message Contents{
+    string cnt = 0;
+    string uId = 1;
+    string uName = 2;
+    string wlBrName = 3;
+    string wlType = 4;
+    string wlIp = 5;
+    string wlChangePoint = 6;
+    string wlDt = 7;
+}
+
+message Pagination {
+    int32 page = 0;
+    int32 totalCount = 1; 
+}
+
+message Data{
+    repeated Contents contents = 0;
+    Pagination pagination = 1;
+}
+
+//Main Message
+message TuiGridForm {
+    bool result = 0 [default = true];
+    Data data = 1;
+}
+
+service TuiGridServerSideService {
+    rpc TuiGridForm (Params) returns (TuiGridForm) {}
+}

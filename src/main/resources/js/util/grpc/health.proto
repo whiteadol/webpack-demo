@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+  message HealthCheckRequest {
+    string service = 1;
+  }
+  
+  message HealthCheckResponse {
+    HealthCheckResponse_ServingStatus serving_status = 1;
+    repeated string details = 2;
+  }
+  
+  enum HealthCheckResponse_ServingStatus {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+  }
+
+  service Health {
+    rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
+  }

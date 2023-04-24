@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+message StatusParams {
+    string deviceId = 1;
+}
+
+message SubForm {
+    int32 a = 0;
+    int32 b = 1;
+}
+
+message HardAndStroage{
+    string Path = 0;
+    int32 Temp = 1;
+    string Type = 2;
+    string Status = 3;
+    bool Rebuild = 4;
+    string DiskFree = 5;
+    string DiskTotal = 6;
+}
+
+message Cameras{
+    string Name = 0;
+    string Bps = 1;
+    int32 Fps = 2;
+    string Rec = 3;
+    string Url = 4;
+    string Uuid = 5;
+    string RecTo = 6;
+    bool Active = 7;
+    bool RecBad = 8;
+    bool StgBad = 9;
+    string DevType = 10;
+    int32 RecDays = 11;
+    string RecFrom = 12;
+    int32 NetError = 13;
+    int32 MaxRecDays = 14;
+}
+
+message DeviceStatus {
+    int32 devicePid = 0;
+    int32 deviceId = 1;
+    string brName = 2;
+    string deviceUuid = 3;
+    string deviceNetAddr = 4;
+    string deviceName = 5;
+    string cameraCnt = 6;
+    string hcId = 7;
+    string hcDeviceType = 8;
+    string hcVersion = 9;
+    string hcRecordStime = 10;
+    string hcRecordEtime = 11;
+    int32 hcRecordDays = 12;
+    string hcRecordingStatus = 13;
+    string hcCpuUsage = 14;
+    string hcAvailableMem = 15;
+    string hcTotalMem = 16;
+    string hcPower = 17;
+    repeated Cameras hcCameras = 18;
+    repeated HardAndStroage hcStorages = 19;
+    HardAndStroage hcDisk = 20;
+    string hcErDt = 21;
+    bool hcSuccess = 22;
+    string hcRdt = 23;
+}
+//Main Message
+message DeviceStatusList {
+    repeated DeviceStatus list = 0;
+}
+
+service DeviceStatusService {
+    rpc GetDeviceStatus (StatusParams) returns (DeviceStatusList) {}
+}

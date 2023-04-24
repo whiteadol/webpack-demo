@@ -36,4 +36,4 @@ out/
 ### VS Code ###
 .vscode/
 #front
-/src/main/resources/static/node_modules/
+/src/main/resources/node_modules/

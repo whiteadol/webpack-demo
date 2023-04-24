@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+message ExamAnswer {
+    int32 id = 1;
+    string answer = 2;
+}
+
+message ResponseStatus {
+    bool isSuccess = 1;
+    string message = 2;
+}
+
+message ExamAnswerParams {
+    repeated ExamAnswer list = 1;
+}
