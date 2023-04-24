@@ -1,12 +1,29 @@
 plugins {
     id 'java'
+    id "com.github.node-gradle.node" version "3.2.1"
     id 'org.springframework.boot' version '2.7.11'
     id 'io.spring.dependency-management' version '1.0.15.RELEASE'
 }
 
+apply plugin: 'com.github.node-gradle.node'
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '11'
+
+node {
+	version = '18.14.1'
+	npmVersion = '9.3.1'
+	download = true
+	nodeProjectDir = file("${project.projectDir}/src/main/resources/static")
+}
+
+sourceSets {
+    main {
+        resources {
+            exclude 'static/node_modules', 'static/js/business', 'static/js/util', 'static/js/worker'
+        }
+    }
+}
 
 repositories {
     mavenCentral()
@@ -18,6 +35,14 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
+
 tasks.named('test') {
     useJUnitPlatform()
 }
+task dev(type: NpmTask) {
+    args = ['run', 'build']
+}
+task product(type: NpmTask) {
+    args = ['run', 'product']
+}
+//processResources.dependsOn 'buildAdmin'`
