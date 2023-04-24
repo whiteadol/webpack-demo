@@ -240,7 +240,7 @@ export class ContextMenu {
  * @param {string} cssId - 스킨의 css 파일 id
  */
 export class SkinMenu {
-	constructor(conMenuEl = 'mainContain', cssPath = '/static/stylesheets/context', cssId = 'skin') {
+	constructor(conMenuEl = 'mainContain', cssPath = 'stylesheets/context', cssId = 'skin') {
 		this.conMenuEl = conMenuEl;
 		this.cssPath = cssPath;
 		this.cssId = cssId;
