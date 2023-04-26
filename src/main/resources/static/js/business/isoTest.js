@@ -33,7 +33,11 @@ const isopGrid = $(".grid").isotope({
     itemSelector: ".card",
     layoutMode: "fitRows",
     stagger: 5,
-    sortAscending: true,
+    sortAscending: {
+        date: true,
+        temperate: true,
+        'card-title': true,
+    },
     getSortData: {
         //온도 내림차순
         temperate: function (itemElem) {
@@ -45,7 +49,7 @@ const isopGrid = $(".grid").isotope({
             const date = $(itemElem).find(".date").text();
             return parseFloat(date.replace(/[\(\)]/g, ""));
         },
-        //text 내림차순
+        //구획명 내림차순
         'card-title': function (itemElem) {
             return $(itemElem).find(".card-title").text();
         }
@@ -56,7 +60,7 @@ const isotopeCntr = new IsotopeCntr({
 });
 
 userList.forEach(oneUser => {
-    for (let i = 0; i < 150; i++) {
+    for (let i = 0; i < 120; i++) {
         const floor = Math.floor(i / 20);
         const room = i % 20;
         const floorStr = floor < 10 ? `${floor}` : `${floor}`;

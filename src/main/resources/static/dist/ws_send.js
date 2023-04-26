@@ -2,7 +2,7 @@
 (() => {
   // js/util/nifi/parse.js
   function DecodeBinary(binary) {
-    return JSON.parse(decodeURIComponent(escape(window.atob(String.fromCharCode.apply(null, new Uint8Array(binary))))));
+    return JSON.parse(decodeURIComponent(escape(window.atob(String.fromCharCode.apply(null, binary)))));
   }
   function JsonToBinary(json) {
     return new TextEncoder().encode(JSON.stringify(json));

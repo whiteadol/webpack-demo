@@ -1,6 +1,6 @@
 'use strict';
 /**
- * binary 데이터를 JSON 데이터로 변환
+ * binary 데이터를 JSON 데이터로 변환 - NINI 용
  * @param {Uint8Array} binary
  * @return {Object}
  * @example
@@ -10,8 +10,9 @@
  * {token: "한글입니다", type: "subscribe", topic: "nifi"}
  **/
 function DecodeBinary(binary) {
-	return JSON.parse(decodeURIComponent(escape(window.atob(String.fromCharCode.apply(null, new Uint8Array(binary))))));
+	return JSON.parse(decodeURIComponent(escape(window.atob(String.fromCharCode.apply(null, binary)))));
 }
+
 //주석
 /**
  * JSON 데이터를 binary 데이터로 변환
