@@ -1,0 +1,28 @@
+@charset "utf-8";
+
+@media only screen and (max-width: 820px) {
+	body{min-width:auto;}
+	#container{min-width:100%;}
+	#m_top{display:block;}
+	/* Main */
+
+	/* Sub */
+
+	/* 푸터 */
+
+	/* 로그인 */
+}
+
+@media only screen and (max-width: 680px) {
+	/* Main */
+
+	/* Sub */
+}
+@media only screen and (max-width: 480px) {
+	/* Main */
+	
+	/* Sub */
+	
+}
+
+
