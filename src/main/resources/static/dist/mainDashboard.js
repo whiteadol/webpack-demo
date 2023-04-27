@@ -11934,239 +11934,8 @@
     }
   });
 
-  // js/business/fireDetect.js
+  // js/business/mainDashboard.js
   var import_notiflix = __toESM(require_notiflix_aio_3_2_6_min());
-
-  // js/lib/context.js
-  var ContextMenu = class {
-    constructor(container, items) {
-      this.container = container;
-      this.dom = null;
-      this.shown = false;
-      this.root = true;
-      this.parent = null;
-      this.submenus = [];
-      this.items = items;
-      this._onclick = (e) => {
-        if (this.dom && e.target != this.dom && e.target.parentElement != this.dom && !e.target.classList.contains("item") && !e.target.parentElement.classList.contains("item")) {
-          this.hideAll();
-        }
-      };
-      this._oncontextmenu = (e) => {
-        e.preventDefault();
-        if (e.target != this.dom && e.target.parentElement != this.dom && !e.target.classList.contains("item") && !e.target.parentElement.classList.contains("item")) {
-          this.hideAll();
-          this.show(e.clientX, e.clientY);
-        }
-      };
-      this._oncontextmenu_keydown = (e) => {
-        if (e.keyCode != 93)
-          return;
-        e.preventDefault();
-        this.hideAll();
-        this.show(e.clientX, e.clientY);
-      };
-      this._onblur = (e) => {
-        this.hideAll();
-      };
-    }
-    getMenuDom() {
-      const menu = document.createElement("div");
-      menu.classList.add("context");
-      for (const item of this.items) {
-        menu.appendChild(this.itemToDomEl(item));
-      }
-      return menu;
-    }
-    itemToDomEl(data) {
-      const item = document.createElement("div");
-      if (data === null) {
-        item.classList = "separator";
-        return item;
-      }
-      if (data.hasOwnProperty("color") && /^#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(data.color.toString())) {
-        item.style.cssText = `color: ${data.color}`;
-      }
-      item.classList.add("item");
-      const label = document.createElement("span");
-      label.classList = "label";
-      label.innerText = data.hasOwnProperty("text") ? data["text"].toString() : "";
-      item.appendChild(label);
-      if (data.hasOwnProperty("disabled") && data["disabled"]) {
-        item.classList.add("disabled");
-      } else {
-        item.classList.add("enabled");
-      }
-      const hotkey = document.createElement("span");
-      hotkey.classList = "hotkey";
-      hotkey.innerText = data.hasOwnProperty("hotkey") ? data["hotkey"].toString() : "";
-      item.appendChild(hotkey);
-      if (data.hasOwnProperty("subitems") && Array.isArray(data["subitems"]) && data["subitems"].length > 0) {
-        const menu = new ContextMenu(this.container, data["subitems"]);
-        menu.root = false;
-        menu.parent = this;
-        const openSubItems = (e) => {
-          if (data.hasOwnProperty("disabled") && data["disabled"] == true)
-            return;
-          this.hideSubMenus();
-          const x = this.dom.offsetLeft + this.dom.clientWidth + item.offsetLeft;
-          const y = this.dom.offsetTop + item.offsetTop;
-          if (!menu.shown) {
-            menu.show(x, y);
-          } else {
-            menu.hide();
-          }
-        };
-        this.submenus.push(menu);
-        item.classList.add("has-subitems");
-        item.addEventListener("click", openSubItems);
-        item.addEventListener("mousemove", openSubItems);
-      } else if (data.hasOwnProperty("submenu") && data["submenu"] instanceof ContextMenu) {
-        const menu = data["submenu"];
-        menu.root = false;
-        menu.parent = this;
-        const openSubItems = (e) => {
-          if (data.hasOwnProperty("disabled") && data["disabled"] == true)
-            return;
-          this.hideSubMenus();
-          const x = this.dom.offsetLeft + this.dom.clientWidth + item.offsetLeft;
-          const y = this.dom.offsetTop + item.offsetTop;
-          if (!menu.shown) {
-            menu.show(x, y);
-          } else {
-            menu.hide();
-          }
-        };
-        this.submenus.push(menu);
-        item.classList.add("has-subitems");
-        item.addEventListener("click", openSubItems);
-        item.addEventListener("mousemove", openSubItems);
-      } else {
-        item.addEventListener("click", (e) => {
-          this.hideSubMenus();
-          if (item.classList.contains("disabled"))
-            return;
-          if (data.hasOwnProperty("onclick") && typeof data["onclick"] === "function") {
-            const event = {
-              handled: false,
-              item,
-              label,
-              hotkey,
-              items: this.items,
-              data
-            };
-            data["onclick"](event);
-            if (!event.handled) {
-              this.hide();
-            }
-          } else {
-            this.hide();
-          }
-        });
-        item.addEventListener("mousemove", (e) => {
-          this.hideSubMenus();
-        });
-      }
-      return item;
-    }
-    hideAll() {
-      if (this.root && !this.parent) {
-        if (this.shown) {
-          this.hideSubMenus();
-          this.shown = false;
-          this.container.removeChild(this.dom);
-          if (this.parent && this.parent.shown) {
-            this.parent.hide();
-          }
-        }
-        return;
-      }
-      this.parent.hide();
-    }
-    hide() {
-      if (this.dom && this.shown) {
-        this.shown = false;
-        this.hideSubMenus();
-        this.container.removeChild(this.dom);
-        if (this.parent && this.parent.shown) {
-          this.parent.hide();
-        }
-      }
-    }
-    hideSubMenus() {
-      for (const menu of this.submenus) {
-        if (menu.shown) {
-          menu.shown = false;
-          menu.container.removeChild(menu.dom);
-        }
-        menu.hideSubMenus();
-      }
-    }
-    show(x, y) {
-      this.dom = this.getMenuDom();
-      this.dom.style.left = `${x}px`;
-      this.dom.style.top = `${y}px`;
-      this.shown = true;
-      this.container.appendChild(this.dom);
-    }
-    install() {
-      this.container.addEventListener("contextmenu", this._oncontextmenu);
-      this.container.addEventListener("keydown", this._oncontextmenu_keydown);
-      this.container.addEventListener("click", this._onclick);
-      window.addEventListener("blur", this._onblur);
-    }
-    uninstall() {
-      this.dom = null;
-      this.container.removeEventListener("contextmenu", this._oncontextmenu);
-      this.container.removeEventListener("keydown", this._oncontextmenu_keydown);
-      this.container.removeEventListener("click", this._onclick);
-      window.removeEventListener("blur", this._onblur);
-    }
-  };
-  var SkinMenu = class {
-    constructor(conMenuEl = "mainContain", cssPath = "stylesheets/context", cssId = "skin") {
-      this.conMenuEl = conMenuEl;
-      this.cssPath = cssPath;
-      this.cssId = cssId;
-    }
-    /**
-     * 스킨 메뉴를 초기화
-     */
-    Init() {
-      const SkinActivator = (e) => {
-        document.getElementById(this.cssId).setAttribute("href", `${this.cssPath}/${e.data.value}.css`);
-        e.handled = true;
-      };
-      const skinsContextMenu = new ContextMenu(document.getElementsByName(this.conMenuEl)[0], [
-        { text: "Chrome - \uC5B4\uB461\uAC8C", value: "chrome-dark", onclick: SkinActivator },
-        { text: "Chrome - \uBC1D\uAC8C", value: "chrome-bright", onclick: SkinActivator },
-        { text: "\uD615\uAD11", value: "hackerman", onclick: SkinActivator },
-        { text: "Kali Dark", value: "kali_dark", onclick: SkinActivator }
-      ]);
-      return skinsContextMenu;
-    }
-  };
-
-  // js/util/context/defMenu.js
-  var defMenu = (isopGrid) => [
-    {
-      text: "\uCD5C\uACE0 \uC628\uB3C4",
-      hotkey: "",
-      onclick: (e) => {
-        e.handled = true;
-        if (e.label.innerText === "\uCD5C\uACE0 \uC628\uB3C4 - \uC120\uD0DD") {
-          e.hotkey.innerText = "";
-          e.label.innerText = "\uCD5C\uACE0 \uC628\uB3C4";
-          e.data.text = e.label.innerText;
-          isopGrid.isotope({ sortBy: "original-order" });
-        } else {
-          e.label.innerText = "\uCD5C\uACE0 \uC628\uB3C4 - \uC120\uD0DD";
-          e.data.text = e.label.innerText;
-          isopGrid.isotope({ sortBy: "temperate" });
-        }
-      }
-    }
-  ];
 
   // js/util/componentCntr.js
   var import_moment = __toESM(require_moment());
@@ -12331,11 +12100,32 @@
     }
   };
 
-  // js/business/fireDetect.js
+  // js/business/mainDashboard.js
   var axios = require_axios();
-  document.addEventListener("DOMContentLoaded", async () => {
-    const isopGrid = $(".grid").isotope({
-      itemSelector: ".card",
+  document.addEventListener("DOMContentLoaded", async function() {
+    var popover = new bootstrap.Popover($(".noti-trigger"), {
+      html: true,
+      container: "body",
+      content: $("#popNotification"),
+      trigger: "focus",
+      placement: "bottom"
+    });
+    $(".mode-body").hide();
+    $(".mode-body:nth-child(1)").show();
+    $(".toggle-mode li").click(function() {
+      $(".mode-body").hide();
+      var activeTab = $(this).attr("rel");
+      $("#" + activeTab).fadeIn();
+      if ($(this).attr("rel") == "full") {
+        $(".mode-slider").addClass("slide");
+      } else {
+        $(".mode-slider").removeClass("slide");
+      }
+      $(".toggle-mode li").removeClass("active");
+      $(this).addClass("active");
+    });
+    const isopGrid = $(".car-info").isotope({
+      itemSelector: ".item_1",
       layoutMode: "fitRows",
       stagger: 5,
       sortAscending: {
@@ -12363,27 +12153,6 @@
     const isotopeCntr = new IsotopeCntr({
       inst: isopGrid
     });
-    const itemList = [
-      {
-        text: "\uC804\uCCB4 \uCD08\uAE30\uD654",
-        onclick: (e) => {
-          isopGrid.isotope({ sortBy: "original-order" });
-          isopGrid.isotope({ filter: "*" });
-        }
-      },
-      {
-        text: "\uC815\uB82C \uCD08\uAE30\uD654",
-        onclick: (e) => {
-          isopGrid.isotope({ sortBy: "original-order" });
-        }
-      },
-      {
-        text: "\uD544\uD130 \uCD08\uAE30\uD654",
-        onclick: (e) => {
-          isopGrid.isotope({ filter: "*" });
-        }
-      }
-    ];
     await axios.get("/camera-api/getCameraEvent").then((res) => {
       res.data.forEach((camera, i) => {
         const floor = Math.floor(i / 20);
@@ -12400,64 +12169,47 @@
         });
         isotopeCntr.AppendIsotElmnt(appendElemnt);
       });
+    }).then(() => {
+      var options = {
+        items: [
+          {
+            text: '<i class="fas fa-chart-line"></i>\uC0C1\uC138\uC815\uBCF4',
+            onclick: function() {
+              $("#modal-detail").modal("show");
+            }
+          },
+          { text: '<i class="fas fa-video"></i>\uC2E4\uC2DC\uAC04 \uC601\uC0C1', href: "javascript:functionEx()" }
+          //영상 링크 또는 스크립트 처리
+        ]
+      };
+      $(".car-info .item_1").contextify(options);
+      setTimeout(() => {
+      }, 1e3);
     }).catch((err) => {
       console.log(err);
     });
-    const skinMenu = new SkinMenu();
-    const kaliContextMenu = new ContextMenu(document.body, itemList);
-    const subItemList = [...defMenu(isopGrid), { text: "\uB370\uC774\uD130 \uD544\uD130", hotkey: "\u276F", submenu: kaliContextMenu }, { text: "\uC2A4\uD0A8", hotkey: "\u276F", submenu: skinMenu.Init() }];
-    const chromeContextMenu = new ContextMenu(document.body, subItemList);
-    chromeContextMenu.install();
-    document.addEventListener("contextmenu", function(event) {
-      event.preventDefault();
-      const [x, y] = [event.clientX, event.clientY];
-      const element = document.elementFromPoint(x - 5, y - 5);
-      const cameraWrapCard = element.closest('div[name="cameraCard"]');
-      if (cameraWrapCard) {
-        const { cameraCh, cameraIp, regDt, tempAvg, tempCenter, tempMax, tempMin } = cameraWrapCard.dataset;
-        console.log(`cameraCh: ${cameraCh}, cameraIp: ${cameraIp}, regDt: ${regDt}, tempAvg: ${tempAvg}, tempCenter: ${tempCenter}, tempMax: ${tempMax}, tempMin: ${tempMin}`);
-      } else {
-        chromeContextMenu.hideAll();
-      }
-    });
-    $("#filters").on("click", "button", function() {
-      const filterValue = $(this).attr("data-filter");
-      const floor = function() {
-        return this.querySelector(`div[name="floor"]`).innerHTML == filterValue;
-      };
-      isopGrid.isotope({ filter: filterValue === "*" ? filterValue : floor });
-    });
-    $("#sorts").on("click", "button", function() {
-      const sortByValue = $(this).attr("data-sort-by");
-      isopGrid.isotope({ sortBy: sortByValue });
-    });
     setTimeout(() => $(isopGrid).isotope("layout"), 500);
-    setTimeout(() => {
-    }, 2e3);
     const nifiSocket = new WebSocket(`wss://${window.location.hostname}/ws`);
     nifiSocket.binaryType = "arraybuffer";
     nifiSocket.onopen = () => console.log("nifi \uC5F0\uACB0 \uC131\uACF5");
     nifiSocket.onmessage = (event) => {
       const cameraEvt = JSON.parse(new TextDecoder().decode(event.data));
       const { max_temp, min_temp, avg_temp, ip, port, rng_id } = cameraEvt;
-      console.log(max_temp);
-      isopGrid.find(`.grid-item`).each(function() {
+      isopGrid.find(`.item_1`).each(function() {
         if (this.id == `camera_${ip}_${port}_${rng_id}`) {
           const [cBody, temperate, viewTemp, nowTempLine, nowTempArrow] = [
-            this.querySelector(`div[name="cBody"]`),
+            this.querySelector(`div[name="cameraCard"]`),
             this.querySelector(`div[name="temperate"]`),
-            this.querySelector(`h7[name="viewTemp"]`),
+            this.querySelector(`strong[name="viewTemp"]`),
             this.querySelector(`div[name="nowTempLine"]`),
             this.querySelector(`div[name="nowTempArrow"]`)
           ];
-          cBody.style.transition = "background-color 1s ease-in-out";
-          cBody.style.backgroundColor = isotopeCntr.CardBackColor(max_temp);
           temperate.innerHTML = max_temp;
           viewTemp.innerText = `${parseFloat(max_temp).toFixed(1)}\u2103`;
           nowTempLine.style.transition = "top 1s ease-in-out";
-          nowTempLine.style.top = `${100 - parseFloat(max_temp)}px`;
+          nowTempLine.style.top = `${parseFloat(max_temp) * 0.55}px`;
           nowTempArrow.style.transition = "top 1s ease-in-out";
-          nowTempArrow.style.top = `${100 - (parseFloat(max_temp) + 4)}px`;
+          nowTempArrow.style.top = `${parseFloat(max_temp) * 0.55 - 4}px`;
         }
       });
       isopGrid.isotope("updateSortData").isotope();
@@ -12468,6 +12220,107 @@
     nifiSocket.onclose = () => {
       console.log("nifi \uC5F0\uACB0 \uC885\uB8CC");
     };
+    Array.from(document.getElementsByClassName("nav-link")).forEach((one) => {
+      one.addEventListener("click", function() {
+        if (this.querySelector("i").classList.contains("up")) {
+          this.querySelector("i").classList.remove("up");
+          $(isopGrid).isotope("option", {
+            sortAscending: true
+          });
+        } else {
+          this.querySelector("i").classList.add("up");
+          $(isopGrid).isotope("option", {
+            sortAscending: false
+          });
+        }
+        const sortByValue = $(this).attr("data-sort-by");
+        isopGrid.isotope({ sortBy: sortByValue });
+      });
+    });
+  });
+  $(".status-toggle-btn").click(function() {
+    $(".status-bar").toggleClass("hide");
+    $(".status-bar ul").slideToggle("fast");
+  });
+  var ctx = document.getElementById("chart-temperature-line").getContext("2d");
+  var myChart = new Chart(ctx, {
+    type: "line",
+    //plugins: [ChartDataLabels],
+    data: {
+      labels: ["09:12", "09:15", "09:18", "09:21", "09:24", "09:27", "09:30", "09:33", "09:36", "09:39", "09:42", "09:45"],
+      datasets: [
+        {
+          tension: 0.4,
+          data: [40.1, 39, 39.2, 40.9, 42.3, 45.1, 50.2, 55.9, 58.5, 62.2, 68, 74.3],
+          borderColor: "#f8e400",
+          borderWidth: "3",
+          pointBackgroundColor: "#dddddd",
+          pointBorderColor: "#2a2c33",
+          pointHoverBackgroundColor: "#f8e400",
+          pointHoverBorderColor: "#918819",
+          pointRadius: 5,
+          pointHoverRadius: 5,
+          pointBorderWidth: 2,
+          fill: false
+        },
+        {
+          tension: 0,
+          data: [67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67],
+          borderColor: "#e64e49",
+          borderWidth: "1",
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      maintainAspectRatio: false,
+      layout: {
+        padding: {
+          // top:40,
+          // left:30,
+          // right:30
+        }
+      },
+      plugins: {
+        tooltip: {
+          enabled: true,
+          callbacks: {
+            label: function(tooltipItem, data) {
+              return tooltipItem.formattedValue + "\u2103";
+            }
+          }
+        },
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: "#d7d7d8"
+          },
+          grid: {
+            display: false,
+            drawBorder: false
+          }
+        },
+        y: {
+          ticks: {
+            color: "#d7d7d8"
+            //display:false
+          },
+          //display: false,
+          grid: {
+            //display: false,
+            color: "rgba(255,255,255,0.08)",
+            drawBorder: false
+          },
+          beginAtZero: true
+        }
+      }
+    }
   });
 })();
 /*! Bundled license information:
@@ -12489,4 +12342,4 @@ lodash/lodash.js:
    * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
    *)
 */
-//# sourceMappingURL=fireDetect.js.map
+//# sourceMappingURL=mainDashboard.js.map

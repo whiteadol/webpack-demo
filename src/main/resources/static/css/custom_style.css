@@ -1,0 +1,12 @@
+div.item_1{width: 295px; float:left; margin-bottom:20px; background:#3b3d47; padding:1.2em; border-radius:10px;}
+div.item_1 .top-info{display:flex; align-items:center; margin-bottom:18px;}
+div.item_1 .top-info .section{display:flex; align-items:center; color:#ffffff;}
+div.item_1 .top-info .section > mark{display:flex; justify-content:center; align-items:center; width:36px; height:36px; border-radius:5px; color:#ffffff; font-size:22px;}
+div.item_1 .top-info .section > mark > i{-webkit-box-shadow: 0px 0px 3px 1px rgba(0,0,0,0.15); box-shadow: 0px 0px 3px 1px rgba(0,0,0,0.15);}
+div.item_1 .top-info .section > span{font-size:16px; padding-left:12px;}
+div.item_1 .top-info .time{color:#ffffff; opacity:0.5; margin-left:auto; display:flex; align-items:center; font-weight:200;}
+div.item_1 .top-info .time > i{font-size:22px;}
+div.item_1 .top-info .time > span{font-size:16px; padding-left:12px;}
+div.item_1 .temperature-info{display:flex; align-items:center;}
+div.item_1 .temperature-info .visual-set{display:flex; align-items:center;}
+div.item_1 .temperature-info .visual-set .car{margin-left:10px;}
