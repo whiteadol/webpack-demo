@@ -5174,10 +5174,10 @@
           }();
           var ctxClearTimeout = context.clearTimeout !== root.clearTimeout && context.clearTimeout, ctxNow = Date2 && Date2.now !== root.Date.now && Date2.now, ctxSetTimeout = context.setTimeout !== root.setTimeout && context.setTimeout;
           var nativeCeil = Math2.ceil, nativeFloor = Math2.floor, nativeGetSymbols = Object2.getOwnPropertySymbols, nativeIsBuffer = Buffer2 ? Buffer2.isBuffer : undefined2, nativeIsFinite = context.isFinite, nativeJoin = arrayProto.join, nativeKeys = overArg(Object2.keys, Object2), nativeMax = Math2.max, nativeMin = Math2.min, nativeNow = Date2.now, nativeParseInt = context.parseInt, nativeRandom = Math2.random, nativeReverse = arrayProto.reverse;
-          var DataView = getNative(context, "DataView"), Map = getNative(context, "Map"), Promise2 = getNative(context, "Promise"), Set = getNative(context, "Set"), WeakMap = getNative(context, "WeakMap"), nativeCreate = getNative(Object2, "create");
+          var DataView = getNative(context, "DataView"), Map2 = getNative(context, "Map"), Promise2 = getNative(context, "Promise"), Set = getNative(context, "Set"), WeakMap = getNative(context, "WeakMap"), nativeCreate = getNative(Object2, "create");
           var metaMap = WeakMap && new WeakMap();
           var realNames = {};
-          var dataViewCtorString = toSource(DataView), mapCtorString = toSource(Map), promiseCtorString = toSource(Promise2), setCtorString = toSource(Set), weakMapCtorString = toSource(WeakMap);
+          var dataViewCtorString = toSource(DataView), mapCtorString = toSource(Map2), promiseCtorString = toSource(Promise2), setCtorString = toSource(Set), weakMapCtorString = toSource(WeakMap);
           var symbolProto = Symbol2 ? Symbol2.prototype : undefined2, symbolValueOf = symbolProto ? symbolProto.valueOf : undefined2, symbolToString = symbolProto ? symbolProto.toString : undefined2;
           function lodash(value) {
             if (isObjectLike(value) && !isArray(value) && !(value instanceof LazyWrapper)) {
@@ -5422,7 +5422,7 @@
             this.size = 0;
             this.__data__ = {
               "hash": new Hash(),
-              "map": new (Map || ListCache)(),
+              "map": new (Map2 || ListCache)(),
               "string": new Hash()
             };
           }
@@ -5487,7 +5487,7 @@
             var data = this.__data__;
             if (data instanceof ListCache) {
               var pairs = data.__data__;
-              if (!Map || pairs.length < LARGE_ARRAY_SIZE - 1) {
+              if (!Map2 || pairs.length < LARGE_ARRAY_SIZE - 1) {
                 pairs.push([key, value]);
                 this.size = ++data.size;
                 return this;
@@ -7231,7 +7231,7 @@
             return result2;
           };
           var getTag = baseGetTag;
-          if (DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag || Map && getTag(new Map()) != mapTag || Promise2 && getTag(Promise2.resolve()) != promiseTag || Set && getTag(new Set()) != setTag || WeakMap && getTag(new WeakMap()) != weakMapTag) {
+          if (DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag || Map2 && getTag(new Map2()) != mapTag || Promise2 && getTag(Promise2.resolve()) != promiseTag || Set && getTag(new Set()) != setTag || WeakMap && getTag(new WeakMap()) != weakMapTag) {
             getTag = function(value) {
               var result2 = baseGetTag(value), Ctor = result2 == objectTag ? value.constructor : undefined2, ctorString = Ctor ? toSource(Ctor) : "";
               if (ctorString) {
@@ -12175,12 +12175,14 @@
     constructor({ inst, opt }) {
       this.inst = inst;
       this.clickFloor = 1;
-      if (opt) {
-        const { filterFn } = opt;
-        this.filterFn = filterFn;
-      } else {
-        this.filterFn = this.#defaultFilters;
-      }
+      this.gradientOpt = {
+        width: 10,
+        height: 55,
+        opacity: 0.5
+      };
+      this.gradientRate = this.gradientOpt["height"] / 100;
+      this.thresholdTempColor = "#0008f5";
+      this.nowTempColor = "black";
     }
     /**
      * 열화상 상태에 따른 배치 html div의 배경색 지정
@@ -12195,78 +12197,35 @@
       const b = 0;
       return `rgba(${r}, ${g}, ${b}, ${type === "card" ? 0.3 : 1})`;
     }
+    /**
+     * 열화상 상태 Elemnt의 차량 아이콘 색상 지정
+     * @param {int} temp 온도값
+     * @example
+     * CarIconColor(20) // rgba(255, 255, 0, 1)
+     * @returns {String} rgba값
+     */
     CarIconColor(temp) {
       const r = temp > 20 ? 255 : Math.floor(temp / 20 * 255);
       const g = temp > 20 ? Math.floor((100 - temp) / 80 * 255) : 255;
       const b = 0;
       return `rgba(${r}, ${g}, ${b}, 1)`;
     }
+    /**
+     * 열화상 상태 Elemnt 생성
+     * @param {Object} data 조회 or 소켓 수신 데이터
+     * @example
+     * CreateThermalCard({data, opt})
+     * @returns {Dom Elemnt} 열화상 상태 Elemnt
+     */
     CreateIsotElmnt({ data, opt = new Object() }) {
       if (_.isEmpty(data)) {
         alert("\uB370\uC774\uD130 \uC5C6\uC74C");
         return;
       }
-      const { ip, port, rng_id, reg_dt, avg_temp, cnt_temp, max_temp, min_temp, floorName, floor, camera_nm, use_yn } = data;
-      const tempValue = parseFloat(max_temp);
-      const randomTempValue = (tempValue2) => {
-        const randomValue = Math.floor(Math.random() * 10);
-        if (tempValue2 - randomValue < 0) {
-          return 0;
-        } else {
-          const returnTemp = parseFloat(tempValue2 - randomValue).toFixed(1);
-          return isNaN(returnTemp) ? "-" : returnTemp;
-        }
-      };
-      const elemnt_origin = ` 
-            <div id="camera_${ip}_${port}_${rng_id}" name="cameraCard" class="item_1 me-3" style="background : ${use_yn === "Y" ? this.CardBackColor(tempValue, "card") : "gray"};"
-                data-camera-ip=${ip}
-                data-camera-ch=${port}
-                data-reg-dt=${reg_dt}
-                data-temp-avg=${avg_temp}
-                data-temp-center=${cnt_temp}
-                data-temp-max=${max_temp}
-                data-temp-min=${min_temp}
-            >
-                <div class="top-info">
-                    <div name="floor" class="floor" style="display : none">${floor}</div>
-                    <div name="floorName" class="floorName" style="display : none">${floorName}</div>
-                    <div name="cameraName" class="cameraName" style="display : none">${ip}__${port}</div>
-                    <div name="temperate" class="temperate" style="display : none">${isNaN(parseFloat(max_temp)) ? 0 : parseFloat(max_temp)}</div>
-                    <div name="date" class="date" style="display : none">${reg_dt ? new Date(reg_dt).getTime() : 1e19}</div>
-                    <div class="section">
-                        <mark style="background-color: ${use_yn === "Y" ? this.CarIconColor(tempValue) : "#89b1fc"}";><i class="fas fa-parking"></i></mark>
-                        <span>${floorName}</span>
-                    </div>
-                    <div class="time">
-                        <i class="far fa-clock"></i>
-                        <span name="timeWrap">00:00:00</span>
-                    </div>
-                </div>
-                <ul class="detail-info">
-                    <li><b>\uC778\uC2DD\uC2DC\uAC04</b>${reg_dt ? (0, import_moment.default)(reg_dt).format("yyyy-MM-DD HH:MM:ss") : "-"}</li>
-                    <li><b>\uCD5C\uCD08\uC628\uB3C4</b>${isNaN(tempValue) ? "-" : tempValue}\u2103</li>
-                    <li><b>\uD3C9\uADE0\uC628\uB3C4</b>${randomTempValue(tempValue)}\u2103</li>
-                </ul>
-                <div class="temperature-info">
-                    <div class="visual-set">
-                        <div class="spectrum">
-                            ${this.CreateColorSpectrum(tempValue)}
-                        </div>
-                        <div class="car">
-                            <div class="car-icon">
-                                <div class="masked-icon" style="background-color: ${use_yn === "Y" ? this.CarIconColor(tempValue) : "#89b1fc"}; "></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="temperature">
-                        <b>\uCD5C\uACE0\uC628\uB3C4</b>
-                        <strong name="viewTemp" style="color:${this.CardBackColor(tempValue)}">${use_yn === "N" ? "-" : isNaN(tempValue.toFixed(1)) ? 0 : tempValue.toFixed(1)}\u2103<small></small></strong>
-                    </div>
-                </div>
-            </div> `;
-      const isopCard = new DOMParser().parseFromString(elemnt_origin, "text/html").body.firstChild;
+      const statusEl = this.CreateThermalCard(data);
+      const isopCard = new DOMParser().parseFromString(statusEl, "text/html").body.firstChild;
       setInterval(() => {
-        const timeDuration = this.TimeDuration(reg_dt);
+        const timeDuration = this.TimeDuration(data["prkng_dt"]);
         isopCard.querySelector("[name=timeWrap]").innerHTML = timeDuration === "NaN:NaN:NaN" ? "00:00:00" : timeDuration;
       }, 1e3);
       return isopCard;
@@ -12274,9 +12233,9 @@
     /**
      * 카메라 이벤트 수신시간과 현재시간의 차이를 반환
      * @param {String} evtTime 카메라 이벤트 수신시간
-     * @returns {String} 시간차
      * @example
      * TimeDuration("2023-04-25 10:00:00")
+     * @returns {String} 시간차
      */
     TimeDuration(evtTime) {
       const timeTerm = parseInt(import_moment.default.duration((0, import_moment.default)().diff((0, import_moment.default)(evtTime))).asSeconds());
@@ -12286,23 +12245,97 @@
       return `${hour}:${min.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
     }
     /**
+     * 온도에 따른 gradient 높이(height)에 따른 비율계산
+     * @param {Float} tempValue 온도값
+     * @example
+     * TempCalculate(50.6)
+     * @returns {Object} 현재온도, 현재온도 화살표가 위치할 값
+     */
+    TempCalculate(tempValue, threshold, gradientRate) {
+      const nowTemp = (isNaN(tempValue) ? 100 : 100 - tempValue) * gradientRate;
+      const viewStandTemp = threshold * gradientRate;
+      return { nowTemp, viewStandTemp };
+    }
+    /**
      * 카메라 이벤트 온도에 따른 스펙트럼 html 생성
      * @param {Float} tempValue 온도값
-     * @returns {String} 스펙트럼 html
      * @example
      * CreateColorSpectrum(50.6)
+     * @returns {String} 스펙트럼 html
      */
-    CreateColorSpectrum(tempValue) {
-      const nowTemp = isNaN(tempValue) ? 100 : 100 - tempValue;
-      const standTemp = 100 - (tempValue - 10);
-      const viewStandTemp = nowTemp <= standTemp || standTemp < 0 ? 0 : standTemp;
+    CreateColorSpectrum(tempValue, threshold, opt) {
+      const { nowTemp, viewStandTemp } = this.TempCalculate(tempValue, threshold, opt ? opt["gradientRate"] : this.gradientRate);
       return `
-        <div style="width: 10px; height: 55px; background: linear-gradient(rgba(255, 0, 0, 0.5), rgba(12, 255, 0, 0.5)); position: absolute; z-index: 1;">
-            <div name="nowTempLine" style="width: 10px; height: 3px; background-color: black; position: absolute; top: ${nowTemp < 0 ? 0 : nowTemp * 0.55}px; left: 0px; z-index: 2;"></div>
-            <div style="width: 10px; height: 3px; background-color: #0008f5; position: absolute; top: ${viewStandTemp < 0 ? 0 : viewStandTemp * 0.55}px; left: 0px; z-index: 2;"></div>
-            <div name="nowTempArrow" style="width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-right: 5px solid black; position: absolute; top: ${nowTemp < 0 ? -4 : (nowTemp - 4) * 0.55}px; left: 10px; z-index: 2;"></div>
-            <div style="width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-right: 5px solid #0008f5; position: absolute; top: ${(viewStandTemp - 5) * 0.55}px; left: 10px; z-index: 2;"></div>
+        <div style="width: ${this.gradientOpt.width}px; height: ${opt ? opt["height"] : this.gradientOpt["height"]}px; background: linear-gradient(rgba(255, 0, 0, 0.5), rgba(12, 255, 0, 0.5)); position: absolute; z-index: 1;">
+        <div name="nowTempLine" style="width: ${opt ? opt["width"] : this.gradientOpt.width}px; height: 2px; background-color: ${this.nowTempColor}; position: absolute; top: ${nowTemp < 0 ? 0 : nowTemp}px; left: 0px; z-index: 2;"></div>
+        <div name="thresholdLine" style="width: ${opt ? opt["width"] : this.gradientOpt.width}px; height: 2px; background-color: ${this.thresholdTempColor}; position: absolute; bottom: ${viewStandTemp < 0 ? 0 : viewStandTemp}px; left: 0px; z-index: 2;"></div>
+        <div name="nowTempArrow" style="width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-right: 5px solid ${this.nowTempColor}; position: absolute; top: ${nowTemp < 0 ? -4 : nowTemp - 4}px; left: ${opt ? opt["width"] : this.gradientOpt.width}px; z-index: 2;"></div>
+        <div name="thresholdArrow" style="width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-right: 5px solid ${this.thresholdTempColor}; position: absolute; bottom: ${isNaN(viewStandTemp) || viewStandTemp < 0 ? -4.2 : viewStandTemp - 4.2}px; left: ${opt ? opt["width"] : this.gradientOpt.width}px; z-index: 2;"></div>
         </div>`;
+    }
+    /**
+     * 카메라 이벤트 온도에 따른 스펙트럼 html 생성
+     * @param {Object} data 조회 or 소켓 수신 데이터
+     * @example
+     * CreateThermalCard(50.6) / String Elemnt
+     */
+    CreateThermalCard(data) {
+      const { ip, port, rng_id, reg_dt, threshold, avg_temp, cnt_temp, max_temp, min_temp, floor, floor_cd, camera_nm, prkng_dt, charge_dt, anomalies_dt } = data;
+      const maxTemp = parseFloat(max_temp);
+      const floorName = `${floor_cd}${floor}F-0${rng_id}`;
+      return ` 
+            <div id="camera_${ip}_${port}_${rng_id}" name="cameraCard" class="status-item me-3" style="background : ${this.CardBackColor(maxTemp, "card")};"
+                data-camera-ip=${ip}
+                data-camera-port=${port}
+                data-camera-rng-id=${rng_id}
+                data-floor-name=${floorName}
+                data-reg-dt=${(0, import_moment.default)(reg_dt).format("YYYY-MM-DD__HH:mm:ss")}
+                data-prkng-dt=${(0, import_moment.default)(prkng_dt).format("YYYY-MM-DD__HH:mm:ss")}
+                data-charge-dt=${(0, import_moment.default)(charge_dt).format("YYYY-MM-DD__HH:mm:ss")}
+                data-anomalies-dt=${(0, import_moment.default)(anomalies_dt).format("YYYY-MM-DD__HH:mm:ss")},
+                data-temp-avg=${avg_temp}
+                data-threshold=${threshold}
+                data-temp-center=${cnt_temp}
+                data-temp-max=${max_temp}
+                data-temp-min=${min_temp}
+            >
+                <div class="top-info">
+                    <div name="floor" class="floor" style="display : none">${floor}</div>
+                    <div name="floorName" class="floorName" style="display : none">${floorName}</div>
+                    <div name="cameraName" class="cameraName" style="display : none">${ip}__${port}</div>
+                    <div name="temperate" class="temperate" style="display : none">${isNaN(parseFloat(max_temp)) ? 0 : parseFloat(max_temp)}</div>
+                    <div name="date" class="date" style="display : none">${prkng_dt ? new Date(prkng_dt).getTime() : 1e19}</div>
+                    <div class="section">
+                        <mark style="background-color: ${this.CarIconColor(maxTemp)}";><i class="fas fa-parking"></i></mark>
+                        <span>${floorName}</span>
+                    </div>
+                    <div class="time">
+                        <i class="far fa-clock"></i>
+                        <span name="timeWrap">00:00:00</span>
+                    </div>
+                </div>
+                <ul class="detail-info">
+                    <li><b>\uC778\uC2DD\uC2DC\uAC04</b>${prkng_dt ? (0, import_moment.default)(prkng_dt).format("yyyy-MM-DD HH:mm:ss") : "-"}</li>
+                    <li><b>\uCD5C\uCD08\uC628\uB3C4</b>${isNaN(maxTemp) ? "-" : maxTemp}\u2103</li>
+                    <li id="avgTemp"><b>\uD3C9\uADE0\uC628\uB3C4</b>${avg_temp}\u2103</li>
+                </ul>
+                <div class="temperature-info">
+                    <div class="visual-set">
+                        <div class="spectrum">
+                            ${this.CreateColorSpectrum(maxTemp, threshold)}
+                        </div>
+                        <div class="car">
+                            <div class="car-icon">
+                                <div class="masked-icon" style="background-color: ${this.CarIconColor(maxTemp)}; "></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="temperature">
+                        <b>\uD604\uC7AC\uC628\uB3C4</b>
+                        <strong name="viewTemp" style="color:${this.CardBackColor(maxTemp)}">${isNaN(maxTemp.toFixed(1)) ? 0 : maxTemp.toFixed(1)}\u2103<small></small></strong>
+                    </div>
+                </div>
+            </div> `;
     }
     /**
      *  IsotopeCntr 인스턴스 생성
@@ -12312,22 +12345,8 @@
     AppendIsotElmnt(elmnt) {
       this.inst.append(elmnt).isotope("appended", elmnt);
     }
-    get #defaultFilters() {
-      return {
-        numberGreaterThan50: function() {
-          const number = $(this).find(".number").text();
-          return parseInt(number, 10) > 50;
-        },
-        brName: function() {
-          const name = $(this).find(".brName").text();
-          return name.includes("\uC740\uD589\uC9C0\uC81001");
-        },
-        brId: function(e) {
-          const name = $(this).find(".brId").text();
-          console.log(name);
-          return name.includes("\uC740\uD589\uC9C0\uC81001");
-        }
-      };
+    RemoveIsotElmnt(elmnt) {
+      this.inst.isotope("remove", elmnt);
     }
   };
 

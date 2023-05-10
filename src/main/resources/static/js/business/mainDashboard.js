@@ -4,44 +4,39 @@ import { Ws } from '../util/wsUtil.js';
 import { Loading, Notify } from 'notiflix';
 import { ContextMenu, SkinMenu } from '../lib/context.js';
 import { defMenu } from '../util/context/defMenu.js';
-import { IsotopeCntr } from '../util/componentCntr.js';
+import { IsotopeCntr, TopStatusSummary } from '../util/componentCntr.js';
+import { UAC } from '../util/exam/userActionCheck.js';
+import { Chartjs } from '../util/chartUtil.js';
+import moment from 'moment';
+const chartjs = new Chartjs('chart-temperature-line');
 const axios = require('axios');
 
+const contextMenuData = {
+	now: null,
+	last: null,
+};
+
+// 알림 팝오버
+var popover = new bootstrap.Popover($('.noti-trigger'), {
+	html: true,
+	container: 'body',
+	content: $('#popNotification'),
+	trigger: 'focus',
+	placement: 'bottom',
+});
+
 document.addEventListener('DOMContentLoaded', async function () {
-	// 알림 팝오버
-	var popover = new bootstrap.Popover($('.noti-trigger'), {
-		html: true,
-		container: 'body',
-		content: $('#popNotification'),
-		trigger: 'focus',
-		placement: 'bottom',
-	});
-
-	// 상세정보 모달 상세정보 & 실시간 영상 토글
-	$('.mode-body').hide();
-	$('.mode-body:nth-child(1)').show(); /* 디폴트 모드 설정 : (1): 그리드 (2): 풀 */
-	/* 그리드, 풀 모드 토글 */
-	$('.toggle-mode li').click(function () {
-		$('.mode-body').hide();
-		var activeTab = $(this).attr('rel');
-		$('#' + activeTab).fadeIn();
-		if ($(this).attr('rel') == 'full') {
-			$('.mode-slider').addClass('slide');
-		} else {
-			$('.mode-slider').removeClass('slide');
-		}
-		$('.toggle-mode li').removeClass('active');
-		$(this).addClass('active');
-	});
-
+	const uac = new UAC();
+	//const topStatusSummary = new TopStatusSummary();
+	//topStatusSummary.totalCamera = cameraList;
 	const isopGrid = $('.car-info').isotope({
-		itemSelector: '.item_1',
+		itemSelector: '.status-item',
 		layoutMode: 'fitRows',
 		stagger: 5,
 		sortAscending: {
 			date: true,
 			temperate: true,
-			'card-title': true,
+			floorName: true,
 		},
 		getSortData: {
 			//온도 내림차순
@@ -55,8 +50,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 				return parseFloat(date.replace(/[\(\)]/g, ''));
 			},
 			//구획명 내림차순
-			'card-title': function (itemElem) {
-				return $(itemElem).find('.card-title').text();
+			floorName: function (itemElem) {
+				return $(itemElem).find('.floorName').text();
 			},
 		},
 	});
@@ -68,37 +63,38 @@ document.addEventListener('DOMContentLoaded', async function () {
 	await axios
 		.get('/camera-api/getCameraEvent')
 		.then(res => {
+			console.log(res.data);
+			if (!res.data.length || (res.data.length === 1 && Object.keys(res.data[0]).length === 1)) return;
 			res.data.forEach((camera, i) => {
-				const floor = Math.floor(i / 20);
-				const room = i % 20;
-				const floorStr = floor < 10 ? `${floor}` : `${floor}`;
-				const roomStr = room < 10 ? `0${room}` : `${room}`;
-				camera['floor'] = 1;
-				camera['floorName'] = `B${floorStr}F-${roomStr}`;
 				const appendElemnt = isotopeCntr.CreateIsotElmnt({
 					data: camera,
-					opt: {
-						idx: i,
-					},
 				});
 				isotopeCntr.AppendIsotElmnt(appendElemnt);
 			});
 		})
 		.then(() => {
 			// 우클릭 메뉴
-			var options = {
+			$('.car-info .status-item').contextify({
 				items: [
 					{
 						text: '<i class="fas fa-chart-line"></i>상세정보',
 						onclick: function () {
+							if (!contextMenuData.now) {
+								alert('데이터가 없습니다.');
+								return;
+							}
 							$('#modal-detail').modal('show');
+						},
+					},
+					{
+						text: '<i class="fas fa-chart-line"></i>Kafka 수신 이미지',
+						onclick: function () {
+							$('#kafka_test_img_popup').modal('show');
 						},
 					},
 					{ text: '<i class="fas fa-video"></i>실시간 영상', href: 'javascript:functionEx()' }, //영상 링크 또는 스크립트 처리
 				],
-			};
-			$('.car-info .item_1').contextify(options);
-			setTimeout(() => {}, 1000);
+			});
 		})
 		.catch(err => {
 			console.log(err);
@@ -106,35 +102,72 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 	//0.5초후 레이아웃 재정렬
 	setTimeout(() => $(isopGrid).isotope('layout'), 500);
-
 	//WebSocket 초기화
 	const nifiSocket = new WebSocket(`wss://${window.location.hostname}/ws`);
 	nifiSocket.binaryType = 'arraybuffer';
-	nifiSocket.onopen = () => console.log('nifi 연결 성공');
+	nifiSocket.onopen = () => {
+		const dataForm = {
+			type: 'userBr',
+			data: 100101,
+		};
+		nifiSocket.send(new TextEncoder().encode(JSON.stringify(dataForm)));
+	};
 	nifiSocket.onmessage = event => {
+		//현재 사용자가 해당 웹 페이지를 보고있지 않다면, 데이터를 받아도 처리하지 않음
+		if (!uac.isFocus) return;
 		const cameraEvt = JSON.parse(new TextDecoder().decode(event.data));
-		const { max_temp, min_temp, avg_temp, ip, port, rng_id } = cameraEvt;
-		isopGrid.find(`.item_1`).each(function () {
-			if (this.id == `camera_${ip}_${port}_${rng_id}`) {
-				const [cBody, temperate, viewTemp, nowTempLine, nowTempArrow] = [
-					this.querySelector(`div[name="cameraCard"]`),
-					this.querySelector(`div[name="temperate"]`),
-					this.querySelector(`strong[name="viewTemp"]`),
-					this.querySelector(`div[name="nowTempLine"]`),
-					this.querySelector(`div[name="nowTempArrow"]`),
-				];
-				//cBody.style.transition = 'background-color 1s ease-in-out';
-				//cBody.style.backgroundColor = isotopeCntr.CardBackColor(max_temp);
-				temperate.innerHTML = max_temp;
-				viewTemp.innerText = `${parseFloat(max_temp).toFixed(1)}℃`;
-				nowTempLine.style.transition = 'top 1s ease-in-out';
-				nowTempLine.style.top = `${parseFloat(max_temp) * 0.55}px`;
-				nowTempArrow.style.transition = 'top 1s ease-in-out';
-				nowTempArrow.style.top = `${parseFloat(max_temp) * 0.55 - 4}px`;
-				//isopGrid.isotope('updateSortData', this)
-			}
-		});
-		isopGrid.isotope('updateSortData').isotope();
+		switch (cameraEvt.type) {
+			case 'processing-ai-camera-data':
+			case 'cam-thermal-data':
+				//prkng_yn : 주차여부
+				//charge_yn : 충전여부
+				//anomalies_yn : 임계치 도달 여부
+				const { max_temp, min_temp, avg_temp, ip, port, rng_id, prkng_yn, charge_yn, anomalies_yn } = JSON.parse(cameraEvt.data);
+				const isDataExist = Array.from(isopGrid.find(`.status-item`)).find(item => item.id === `camera_${ip}_${port}_${rng_id}`);
+				if (prkng_yn && !isDataExist) {
+					console.log('2. 실시간 데이터에서는 주차가 되어있다고 하지만, 진입시 대시보드에는 주차데이터가 없는 경우 - %c html 추가', 'color: blue; font-size: 15px;');
+					const appendElemnt = isotopeCntr.CreateIsotElmnt({
+						data: JSON.parse(cameraEvt.data),
+					});
+					isotopeCntr.AppendIsotElmnt(appendElemnt);
+					isopGrid.isotope('updateSortData').isotope();
+				} else if (!prkng_yn && isDataExist) {
+					console.log('3. 실시간 데이터에서는 주차가 안되어있다고 하지만, 진입시 대시보드에는 주차데이터가 존재하는 경우 - %c대시보드에서 해당 데이터 삭제', 'color: red; font-size: 15px;');
+					isotopeCntr.RemoveIsotElmnt(isDataExist);
+					isopGrid.isotope('updateSortData').isotope();
+				} else if (prkng_yn && isDataExist) {
+					const [temperate, avgTemp, viewTemp, nowTempLine, nowTempArrow] = [
+						isDataExist.querySelector(`div[name="temperate"]`),
+						isDataExist.querySelector(`li[id="avgTemp"]`),
+						isDataExist.querySelector(`strong[name="viewTemp"]`),
+						isDataExist.querySelector(`div[name="nowTempLine"]`),
+						isDataExist.querySelector(`div[name="nowTempArrow"]`),
+					];
+					temperate.innerHTML = max_temp;
+					avgTemp.innerHTML = `<b>평균온도</b>${avg_temp}℃`;
+					viewTemp.innerText = `${parseFloat(max_temp).toFixed(1)}℃`;
+					nowTempLine.style.transition = 'bottom 1s ease-in-out';
+					nowTempLine.style.bottom = `${parseFloat(max_temp) * 0.55}px`;
+					nowTempArrow.style.transition = 'bottom 1s ease-in-out';
+					nowTempArrow.style.bottom = `${parseFloat(max_temp) * 0.55 - 4}px`;
+					isopGrid.isotope('updateSortData').isotope();
+				}
+				break;
+			default:
+				const canvas = document.getElementById('canvas');
+				//kafka로 전송받은 image data base64로 변환(png)
+				const image = new Image();
+				image.src = `data:image/png;base64,${cameraEvt.data}`;
+				image.onload = () => {
+					canvas.width = image.width;
+					canvas.height = image.height;
+					canvas.style.transition = 'background-color 1s ease-in-out';
+					const ctx = canvas.getContext('2d');
+					ctx.drawImage(image, 0, 0);
+				};
+				console.log(cameraEvt);
+				break;
+		}
 	};
 	nifiSocket.onerror = error => {
 		console.log(error);
@@ -142,8 +175,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 	nifiSocket.onclose = () => {
 		console.log('nifi 연결 종료');
 	};
-	Array.from(document.getElementsByClassName('nav-link')).forEach(one => {
-		one.addEventListener('click', function () {
+	//상단 필터 버튼 클릭 이벤트
+	Array.from(document.getElementsByClassName('nav-link')).forEach(filterEl => {
+		filterEl.addEventListener('click', function () {
 			if (this.querySelector('i').classList.contains('up')) {
 				this.querySelector('i').classList.remove('up');
 				$(isopGrid).isotope('option', {
@@ -158,93 +192,100 @@ document.addEventListener('DOMContentLoaded', async function () {
 			const sortByValue = $(this).attr('data-sort-by');
 			isopGrid.isotope({ sortBy: sortByValue });
 		});
+		filterEl.dataset.sortBy === 'temperate' &&
+			setTimeout(() => {
+				filterEl.click();
+			}, 500);
 	});
+
+	document.addEventListener('contextmenu', function (event) {
+		event.preventDefault(); // 기본 동작 중단
+		const [x, y] = [event.clientX, event.clientY];
+		const element = document.elementFromPoint(x - 5, y - 5); // x, y 좌표에 해당하는 HTML 요소 가져오기
+		const cameraWrapCard = element.closest('div[name="cameraCard"]');
+		//최상위
+		if (cameraWrapCard) {
+			const { floorName, cameraIp, cameraPort, cameraRngId, threshold, regDt, tempAvg, tempCenter, tempMax, tempMin, prkngDt } = cameraWrapCard.dataset;
+			contextMenuData.last = contextMenuData.now;
+			contextMenuData.now = {
+				floorName,
+				cameraIp,
+				cameraPort,
+				cameraRngId,
+				threshold,
+				tempAvg,
+				prkngDt,
+				tempCenter,
+				tempMax,
+				tempMin,
+				regDt,
+			};
+		} else {
+			if (contextMenuData.now) {
+				contextMenuData.last = contextMenuData.now;
+			}
+			contextMenuData.now = null;
+		}
+		console.log(contextMenuData);
+	});
+
+	$('#modal-detail').on('show.bs.modal', async () => {
+		if (!contextMenuData.now) return;
+		const { floorName, cameraIp, cameraPort, cameraRngId, tempAvg, tempCenter, tempMax, threshold, tempMin, prkngDt, regDt } = contextMenuData.now;
+		await axios
+			.get('/camera-api/getCameraDetailEvent', {
+				params: {
+					ip: cameraIp,
+					port: cameraPort,
+					rngId: cameraRngId,
+				},
+			})
+			.then(res => {
+				const detailMaxTemp = Math.max(res.data.map(cameraData => parseFloat(cameraData.max_temp)));
+				document.getElementById('p-title').innerText = `${floorName}`;
+				document.getElementById('ps-maxTemp').innerText = `${detailMaxTemp}℃`;
+				document.getElementById('p-prkngDt').innerHTML = `<b>최초 차량 인식 시간</b>${prkngDt.replace(/__/gi, ' ')}`;
+				document.getElementById('p-maxTemp').innerHTML = `<b>최초 차량 최초 온도</b>${tempMax}℃`;
+				document.getElementById('p-avgTemp').innerHTML = `<b>최초 차량 평균 온도</b>${tempAvg}℃`;
+				const chartTemp = res.data.map(chartData => parseFloat(chartData.max_temp)).reverse();
+				const chartGruidTemp = res.data.map(chartData => chartData.threshold).reverse();
+				const chartLabel = res.data.map(chartData => chartData.to_char_date).reverse();
+				chartjs.update = { label: chartLabel, data: chartTemp, threshold: chartGruidTemp };
+				const gradientOpt = {
+					width: 10,
+					height: 200,
+					opacity: 0.5,
+				};
+				//100에 비례한 높이비율값
+				gradientOpt['gradientRate'] = gradientOpt['height'] / 100;
+				$(document.getElementById('p-spectrum')).empty();
+				$(document.getElementById('p-spectrum')).append(isotopeCntr.CreateColorSpectrum(parseFloat(tempMax), threshold, gradientOpt));
+			})
+			.catch(err => console.error(err));
+	});
+
+	$('#modal-detail').on('hidden.bs.modal', function () {});
+});
+
+// 상세정보 모달 상세정보 & 실시간 영상 토글
+$('.mode-body').hide();
+$('.mode-body:nth-child(1)').show(); /* 디폴트 모드 설정 : (1): 그리드 (2): 풀 */
+/* 그리드, 풀 모드 토글 */
+$('.toggle-mode li').click(function () {
+	$('.mode-body').hide();
+	var activeTab = $(this).attr('rel');
+	$('#' + activeTab).fadeIn();
+	if ($(this).attr('rel') == 'full') {
+		$('.mode-slider').addClass('slide');
+	} else {
+		$('.mode-slider').removeClass('slide');
+	}
+	$('.toggle-mode li').removeClass('active');
+	$(this).addClass('active');
 });
 
 // 상단 요약정보 바 토글
 $('.status-toggle-btn').click(function () {
 	$('.status-bar').toggleClass('hide');
 	$('.status-bar ul').slideToggle('fast');
-});
-
-/* 상세 모달 라인차트 */
-var ctx = document.getElementById('chart-temperature-line').getContext('2d');
-var myChart = new Chart(ctx, {
-	type: 'line',
-	//plugins: [ChartDataLabels],
-	data: {
-		labels: ['09:12', '09:15', '09:18', '09:21', '09:24', '09:27', '09:30', '09:33', '09:36', '09:39', '09:42', '09:45'],
-		datasets: [
-			{
-				tension: 0.4,
-				data: [40.1, 39.0, 39.2, 40.9, 42.3, 45.1, 50.2, 55.9, 58.5, 62.2, 68.0, 74.3],
-				borderColor: '#f8e400',
-				borderWidth: '3',
-				pointBackgroundColor: '#dddddd',
-				pointBorderColor: '#2a2c33',
-				pointHoverBackgroundColor: '#f8e400',
-				pointHoverBorderColor: '#918819',
-				pointRadius: 5,
-				pointHoverRadius: 5,
-				pointBorderWidth: 2,
-				fill: false,
-			},
-			{
-				tension: 0,
-				data: [67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67, 67],
-				borderColor: '#e64e49',
-				borderWidth: '1',
-				pointRadius: 0,
-				pointHoverRadius: 0,
-				fill: false,
-			},
-		],
-	},
-	options: {
-		maintainAspectRatio: false,
-		layout: {
-			padding: {
-				// top:40,
-				// left:30,
-				// right:30
-			},
-		},
-		plugins: {
-			tooltip: {
-				enabled: true,
-				callbacks: {
-					label: function (tooltipItem, data) {
-						return tooltipItem.formattedValue + '℃';
-					},
-				},
-			},
-			legend: {
-				display: false,
-			},
-		},
-		scales: {
-			x: {
-				ticks: {
-					color: '#d7d7d8',
-				},
-				grid: {
-					display: false,
-					drawBorder: false,
-				},
-			},
-			y: {
-				ticks: {
-					color: '#d7d7d8',
-					//display:false
-				},
-				//display: false,
-				grid: {
-					//display: false,
-					color: 'rgba(255,255,255,0.08)',
-					drawBorder: false,
-				},
-				beginAtZero: true,
-			},
-		},
-	},
 });

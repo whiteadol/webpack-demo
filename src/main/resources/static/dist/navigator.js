@@ -4,10 +4,11 @@
     #logOutTime;
     #remainingTime;
     #limitSecond;
+    #isFocus;
     constructor(el) {
       this.#logOutTime = 1;
       this.#remainingTime = 30;
-      this.#limitSecond = 300;
+      this.#limitSecond = 600;
       document.onkeypress = () => {
         this.#logOutTime = 1;
         this.#remainingTime = 30;
@@ -18,29 +19,36 @@
       };
       setInterval(() => this.#TimeCheck(), 1e3);
       this.#FocusScreenCheck();
+      this.#isFocus = true;
     }
     #TimeCheck() {
       this.#logOutTime++;
       if (this.#logOutTime >= this.#limitSecond) {
         if (this.#remainingTime <= 0) {
-          alert("\uC7A5\uC2DC\uAC04 \uBBF8\uC0AC\uC6A9\uC73C\uB85C \uAC15\uC81C \uC2DC\uD5D8\uC885\uB8CC");
+          alert("\uC7A5\uC2DC\uAC04 \uBBF8\uC0AC\uC6A9");
         } else {
-          let text = `\uC0AC\uC6A9\uC790\uC758 \uC6C0\uC9C1\uC784\uC774 \uC5C6\uC5B4 ${this.#remainingTime}\uCD08 \uD6C4, \uC790\uB3D9 \uB85C\uADF8\uC544\uC6C3\uC774 \uB429\uB2C8\uB2E4.`;
-          console.log(text);
+          console.log(`\uC0AC\uC6A9\uC790\uC758 \uC6C0\uC9C1\uC784\uC774 \uC5C6\uC5B4 ${this.#remainingTime}\uCD08 \uD6C4, \uC790\uB3D9 \uB85C\uADF8\uC544\uC6C3\uC774 \uB429\uB2C8\uB2E4.`);
         }
         this.#remainingTime--;
       }
     }
     #FocusScreenCheck() {
-      window.onfocus = (e) => $("html, body").css({ background: "white", color: "#000" });
-      window.onblur = (e) => $("html, body").css({ background: "black", color: "" });
       document.onvisibilitychange = (ev) => {
         const { hidden, webkitHidden, webkitVisibilityState } = ev.target;
         if (hidden || webkitHidden || webkitVisibilityState === "hidden") {
-          alert("\uD654\uBA74\uC804\uD658");
-          $("html, body").css({ background: "black", color: "" });
+          this.#isFocus = false;
+          console.log("\uD398\uC774\uC9C0\uAC00 \uBE44\uD65C\uC131\uD654 \uB418\uC5C8\uC2B5\uB2C8\uB2E4.");
+        } else {
+          this.#isFocus = true;
+          console.log("\uD398\uC774\uC9C0\uAC00 \uD65C\uC131\uD654 \uB418\uC5C8\uC2B5\uB2C8\uB2E4.");
         }
       };
+    }
+    get isFocus() {
+      return this.#isFocus;
+    }
+    set isFocus(val) {
+      this.#isFocus = val;
     }
   };
 

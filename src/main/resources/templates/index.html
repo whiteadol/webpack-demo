@@ -128,7 +128,7 @@
 							</div>
 							<div class="stat">
 								<small>총 카메라</small>
-								<strong>150</strong>
+								<strong id="totalCamera">150</strong>
 							</div>
 						</div>
 					</li>
@@ -140,7 +140,7 @@
 							</div>
 							<div class="stat">
 								<small>충전 인식</small>
-								<strong>43</strong>
+								<strong id="chargeRecognition">43</strong>
 							</div>
 						</div>
 					</li>
@@ -152,7 +152,7 @@
 							</div>
 							<div class="stat">
 								<small>이상징후</small>
-								<strong class="stat-warning">2</strong>
+								<strong class="stat-warning" id="anomalies">2</strong>
 							</div>
 						</div>
 					</li>
@@ -164,7 +164,7 @@
 							</div>
 							<div class="stat">
 								<small>최고온도</small>
-								<strong>84.5 ℃ </strong>
+								<strong id="maxTemp">84.5℃</strong>
 							</div>
 						</div>
 					</li>
@@ -176,7 +176,7 @@
 							</div>
 							<div class="stat">
 								<small>최저온도</small>
-								<strong>16.3 ℃</strong>
+								<strong id="minTemp">16.3℃</strong>
 							</div>
 						</div>
 					</li>
@@ -188,7 +188,7 @@
 							</div>
 							<div class="stat">
 								<small>평균온도</small>
-								<strong>54.3 ℃</strong>
+								<strong id="avgTemp">54.3℃</strong>
 							</div>
 						</div>
 					</li>
@@ -199,7 +199,10 @@
 			<div class="tab-sub-set">
 				<ul class="nav tab-sub">
 					<li class="nav-item">
-						<a class="nav-link active" data-sort-by="card-title" data-bs-toggle="tab" href="#">주차 구획<i class="sort-arrow"></i></a>
+						<a class="nav-link active" data-sort-by="temperate" data-bs-toggle="tab" href="#">최고 온도<i class="sort-arrow up"></i></a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" data-sort-by="floorName" data-bs-toggle="tab" href="#">주차 구획<i class="sort-arrow"></i></a>
 					</li>
 					<li class="nav-item" >
 						<a class="nav-link" data-bs-toggle="tab" href="#">경과 시간<i class="sort-arrow up"></i></a>
@@ -212,9 +215,6 @@
 					</li>
 					<li class="nav-item">
 						<a class="nav-link" data-bs-toggle="tab" href="#">평균 온도<i class="sort-arrow"></i></a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" data-sort-by="temperate" data-bs-toggle="tab" href="#">최고 온도<i class="sort-arrow"></i></a>
 					</li>
 				</ul>
 			</div>
@@ -237,7 +237,7 @@
 		<div class="modal-dialog modal-lg modal-dialog-centered">
 			<div class="modal-content">
 				<div class="modal-header">
-					<h5 class="modal-title">B1F-01</h5>
+					<h5 id="p-title" class="modal-title">B1F-01</h5>
 					<!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> -->
 					<!-- 상세정보 & 실시간 영상 토글 버튼 -->
 					<div class="toggle-mode">
@@ -251,14 +251,14 @@
 					<div class="modal-car-detail">
 						<div class="temperature-info">
 							<div class="visual-set">
-								<div class="spectrum">
-									<mark><img src="/images/sample-img-spectrum.png" alt="Spectrum"></mark>
-									<i style="border-right-color:#f1dd54; bottom:70%;"></i>
+								<div id="p-spectrum" class="spectrum" style="height: 200px;">
+									<!-- <mark><img src="/images/sample-img-spectrum.png" alt="Spectrum"></mark>
+									<i style="border-right-color:#f1dd54; bottom:70%;"></i> -->
 								</div>
 								<div class="car">
 									<div class="temperature">
 										<b>최고온도</b>
-										<strong style="color:#f1dd54">50.8<small>℃</small></strong>
+										<strong id="ps-maxTemp"style="color:#f1dd54">50.8 ℃</strong>
 									</div>
 									<div class="car-icon">
 										<div class="masked-icon" style="background-color:#f1dd54"></div>
@@ -267,9 +267,9 @@
 							</div>
 							<div class="detail-info-set">
 								<ul class="detail-info">
-									<li><b>최초 차량 인식 시간</b>2023-02-28 09:12:14</li>
-									<li><b>최초 차량 최초 온도</b>43.2℃</li>
-									<li><b>최초 차량 평균 온도</b>63.1℃</li>
+									<li id="p-prkngDt"><b>최초 차량 인식 시간</b>2023-02-28 09:12:14</li>
+									<li id="p-maxTemp"><b>최초 차량 최초 온도</b>43.2℃</li>
+									<li id="p-avgTemp"><b>최초 차량 평균 온도</b>63.1℃</li>
 								</ul>
 								<div class="chart-legend">
 									<span>임계온도</span>
@@ -288,6 +288,23 @@
 			</div>
 		</div>
 	</div>
+
+	<div class="modal fade" id="kafka_test_img_popup" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-lg modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">Kafka 수신 이미지</h5>
+				</div>
+				<div class="modal-body">
+					<canvas id="canvas" style="width: 100%;"></canvas>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-gray" data-bs-dismiss="modal">닫기</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 </body>
 
 <script src="/dist/maindashboard.js" ></script>
