@@ -12486,6 +12486,17 @@
       }
       console.log(contextMenuData);
     });
+    await axios.get("/camera-api/getStaticsData").then((res) => {
+      console.log(res.data);
+      if (res.data.length) {
+        document.querySelector(".status-bar #totalCamera").innerText = res.data[0].use_camera_cnt ?? 0;
+        document.querySelector(".status-bar #chargeRecognition").innerText = res.data[0].prkng_cnt ?? 0;
+        document.querySelector(".status-bar #anomalies").innerText = `${res.data[0].anomalies_cnt ?? 0}`;
+        document.querySelector(".status-bar #maxTemp").innerText = `${res.data[0].max_temp ?? 0}\u2103`;
+        document.querySelector(".status-bar #minTemp").innerText = `${res.data[0].min_temp ?? 0}\u2103`;
+        document.querySelector(".status-bar #avgTemp").innerText = `${res.data[0].avg_temp ?? 0}\u2103`;
+      }
+    });
     $("#modal-detail").on("show.bs.modal", async () => {
       if (!contextMenuData.now)
         return;
@@ -12497,12 +12508,14 @@
           rngId: cameraRngId
         }
       }).then((res) => {
-        const detailMaxTemp = Math.max(res.data.map((cameraData) => parseFloat(cameraData.max_temp)));
+        console.log(res.data);
+        const lastArrayData = res.data[res.data.length - 1];
+        const detailMaxTemp = Math.max(...res.data.map((cameraData) => parseFloat(cameraData.max_temp)));
         document.getElementById("p-title").innerText = `${floorName}`;
         document.getElementById("ps-maxTemp").innerText = `${detailMaxTemp}\u2103`;
         document.getElementById("p-prkngDt").innerHTML = `<b>\uCD5C\uCD08 \uCC28\uB7C9 \uC778\uC2DD \uC2DC\uAC04</b>${prkngDt.replace(/__/gi, " ")}`;
-        document.getElementById("p-maxTemp").innerHTML = `<b>\uCD5C\uCD08 \uCC28\uB7C9 \uCD5C\uCD08 \uC628\uB3C4</b>${tempMax}\u2103`;
-        document.getElementById("p-avgTemp").innerHTML = `<b>\uCD5C\uCD08 \uCC28\uB7C9 \uD3C9\uADE0 \uC628\uB3C4</b>${tempAvg}\u2103`;
+        document.getElementById("p-maxTemp").innerHTML = `<b>\uCD5C\uCD08 \uCC28\uB7C9 \uCD5C\uCD08 \uC628\uB3C4</b>${lastArrayData.max_temp}\u2103`;
+        document.getElementById("p-avgTemp").innerHTML = `<b>\uCD5C\uCD08 \uCC28\uB7C9 \uD3C9\uADE0 \uC628\uB3C4</b>${lastArrayData.avg_temp}\u2103`;
         const chartTemp = res.data.map((chartData) => parseFloat(chartData.max_temp)).reverse();
         const chartGruidTemp = res.data.map((chartData) => chartData.threshold).reverse();
         const chartLabel = res.data.map((chartData) => chartData.to_char_date).reverse();

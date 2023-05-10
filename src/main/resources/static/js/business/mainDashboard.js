@@ -229,6 +229,19 @@ document.addEventListener('DOMContentLoaded', async function () {
 		console.log(contextMenuData);
 	});
 
+	//대시보드 상단 종합데이터 목록 조회
+	await axios.get('/camera-api/getStaticsData').then(res => {
+		console.log(res.data);
+		if (res.data.length) {
+			document.querySelector('.status-bar #totalCamera').innerText = res.data[0].use_camera_cnt ?? 0;
+			document.querySelector('.status-bar #chargeRecognition').innerText = res.data[0].prkng_cnt ?? 0;
+			document.querySelector('.status-bar #anomalies').innerText = `${res.data[0].anomalies_cnt ?? 0}`;
+			document.querySelector('.status-bar #maxTemp').innerText = `${res.data[0].max_temp ?? 0}℃`;
+			document.querySelector('.status-bar #minTemp').innerText = `${res.data[0].min_temp ?? 0}℃`;
+			document.querySelector('.status-bar #avgTemp').innerText = `${res.data[0].avg_temp ?? 0}℃`;
+		}
+	});
+	//상세 popup show 이벤트
 	$('#modal-detail').on('show.bs.modal', async () => {
 		if (!contextMenuData.now) return;
 		const { floorName, cameraIp, cameraPort, cameraRngId, tempAvg, tempCenter, tempMax, threshold, tempMin, prkngDt, regDt } = contextMenuData.now;
@@ -241,12 +254,18 @@ document.addEventListener('DOMContentLoaded', async function () {
 				},
 			})
 			.then(res => {
-				const detailMaxTemp = Math.max(res.data.map(cameraData => parseFloat(cameraData.max_temp)));
+				console.log(res.data);
+				//res.data Array의 가장 마지막 데이터
+				const lastArrayData = res.data[res.data.length - 1];
+				const detailMaxTemp = Math.max(...res.data.map(cameraData => parseFloat(cameraData.max_temp)));
 				document.getElementById('p-title').innerText = `${floorName}`;
 				document.getElementById('ps-maxTemp').innerText = `${detailMaxTemp}℃`;
 				document.getElementById('p-prkngDt').innerHTML = `<b>최초 차량 인식 시간</b>${prkngDt.replace(/__/gi, ' ')}`;
+				document.getElementById('p-maxTemp').innerHTML = `<b>최초 차량 최초 온도</b>${lastArrayData.max_temp}℃`;
+				document.getElementById('p-avgTemp').innerHTML = `<b>최초 차량 평균 온도</b>${lastArrayData.avg_temp}℃`;
+				/* document.getElementById('p-prkngDt').innerHTML = `<b>최초 차량 인식 시간</b>${prkngDt.replace(/__/gi, ' ')}`;
 				document.getElementById('p-maxTemp').innerHTML = `<b>최초 차량 최초 온도</b>${tempMax}℃`;
-				document.getElementById('p-avgTemp').innerHTML = `<b>최초 차량 평균 온도</b>${tempAvg}℃`;
+				document.getElementById('p-avgTemp').innerHTML = `<b>최초 차량 평균 온도</b>${tempAvg}℃`; */
 				const chartTemp = res.data.map(chartData => parseFloat(chartData.max_temp)).reverse();
 				const chartGruidTemp = res.data.map(chartData => chartData.threshold).reverse();
 				const chartLabel = res.data.map(chartData => chartData.to_char_date).reverse();
